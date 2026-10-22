@@ -7,7 +7,7 @@ A [Pi](https://github.com/mariozechner/pi) extension that gates every bash comma
 The extension hooks Pi's `tool_call` event. For each proposed bash command it sends the current task plus the command to an OpenRouter model with a strict judge prompt. The judge replies with minified JSON:
 
 ```json
-{"verdict":"allow","reason":"..."}
+{ "verdict": "allow", "reason": "..." }
 ```
 
 - `allow` — the command runs
@@ -27,10 +27,10 @@ Requires `OPENROUTER_API_KEY` in Pi's environment.
 
 ## Configuration
 
-| Env var | Default | Meaning |
-| --- | --- | --- |
-| `PIAUTOMODE_MODEL` | `typesafe/jev-router` | OpenRouter model used as the judge |
-| `PIAUTOMODE_TIMEOUT_MS` | `30000` | Judge request timeout |
+| Env var                 | Default               | Meaning                            |
+| ----------------------- | --------------------- | ---------------------------------- |
+| `PIAUTOMODE_MODEL`      | `typesafe/jev-router` | OpenRouter model used as the judge |
+| `PIAUTOMODE_TIMEOUT_MS` | `30000`               | Judge request timeout              |
 
 ## Try it for one invocation
 
