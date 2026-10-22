@@ -1,5 +1,5 @@
 {
-  "name": "jev-guard",
+  "name": "pi-auto-mode",
   "version": "1.0.0",
   "description": "Pi extension: every bash command is judged by an OpenRouter model before it runs; unsafe or off-task commands are blocked.",
   "type": "module",
@@ -13,6 +13,6 @@
   ],
   "license": "MIT",
   "pi": {
-    "extensions": ["./extensions/jev-guard.ts"]
+    "extensions": ["./extensions/pi-auto-mode.ts"]
   }
 }

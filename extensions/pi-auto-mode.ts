@@ -1,8 +1,8 @@
 import type { ExtensionAPI, ToolCallEvent, ToolCallEventResult } from "@earendil-works/pi-coding-agent";
 
-const MODEL = process.env.JEVGUARD_MODEL ?? "typesafe/jev-router";
+const MODEL = process.env.PIAUTOMODE_MODEL ?? "typesafe/jev-router";
 const API_KEY = process.env.OPENROUTER_API_KEY;
-const REQUEST_TIMEOUT_MS = Number(process.env.JEVGUARD_TIMEOUT_MS ?? 30000);
+const REQUEST_TIMEOUT_MS = Number(process.env.PIAUTOMODE_TIMEOUT_MS ?? 30000);
 const ENDPOINT = "https://openrouter.ai/api/v1/chat/completions";
 
 const SYSTEM_PROMPT = [
@@ -43,7 +43,7 @@ const judge = async (task: string, command: string): Promise<{ verdict: string; 
 
 const cache = new Map<string, { verdict: string; reason: string }>();
 
-export default function jevGuard(pi: ExtensionAPI) {
+export default function piAutoMode(pi: ExtensionAPI) {
   let currentTask = "unknown";
 
   pi.on("input", (event) => {
@@ -53,7 +53,7 @@ export default function jevGuard(pi: ExtensionAPI) {
   pi.on("tool_call", async (event: ToolCallEvent): Promise<ToolCallEventResult | undefined> => {
     if (event.toolName !== "bash") return undefined;
     const command = event.input.command as string;
-    if (!API_KEY) return { block: true, reason: "jev-guard: OPENROUTER_API_KEY not set" };
+    if (!API_KEY) return { block: true, reason: "pi-auto-mode: OPENROUTER_API_KEY not set" };
 
     let verdict: { verdict: string; reason: string };
     const cacheKey = `${currentTask}\n${command}`;
@@ -63,11 +63,11 @@ export default function jevGuard(pi: ExtensionAPI) {
       try {
         verdict = await judge(currentTask, command);
       } catch (error) {
-        verdict = { verdict: "block", reason: `jev-guard: check failed (${String(error)})` };
+        verdict = { verdict: "block", reason: `pi-auto-mode: check failed (${String(error)})` };
       }
       cache.set(cacheKey, verdict);
     }
-    if (verdict.verdict === "block") return { block: true, reason: `jev-guard blocked: ${verdict.reason}` };
+    if (verdict.verdict === "block") return { block: true, reason: `pi-auto-mode blocked: ${verdict.reason}` };
     return undefined;
   });
 }

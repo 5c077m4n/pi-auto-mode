@@ -1,4 +1,4 @@
-# jev-guard
+# pi-auto-mode
 
 A [Pi](https://github.com/mariozechner/pi) extension that gates every bash command through an OpenRouter model before it runs. Unsafe or off-task commands are blocked; the agent sees the reason.
 
@@ -20,7 +20,7 @@ Verdicts are cached per task+command pair.
 ## Install
 
 ```bash
-pi install git:github.com/5c077m4n/jev-guard
+pi install git:github.com/5c077m4n/pi-auto-mode
 ```
 
 Requires `OPENROUTER_API_KEY` in Pi's environment.
@@ -29,11 +29,11 @@ Requires `OPENROUTER_API_KEY` in Pi's environment.
 
 | Env var | Default | Meaning |
 | --- | --- | --- |
-| `JEVGUARD_MODEL` | `typesafe/jev-router` | OpenRouter model used as the judge |
-| `JEVGUARD_TIMEOUT_MS` | `30000` | Judge request timeout |
+| `PIAUTOMODE_MODEL` | `typesafe/jev-router` | OpenRouter model used as the judge |
+| `PIAUTOMODE_TIMEOUT_MS` | `30000` | Judge request timeout |
 
 ## Try it for one invocation
 
 ```bash
-OPENROUTER_API_KEY=... pi -e git:github.com/5c077m4n/jev-guard -p "run: echo hello"
+OPENROUTER_API_KEY=... pi -e git:github.com/5c077m4n/pi-auto-mode -p "run: echo hello"
 ```
