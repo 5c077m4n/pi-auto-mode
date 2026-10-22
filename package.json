@@ -13,6 +13,19 @@
   ],
   "license": "MIT",
   "pi": {
-    "extensions": ["./extensions/pi-auto-mode.ts"]
+    "extensions": [
+      "./extensions/pi-auto-mode.ts"
+    ]
+  },
+  "dependencies": {
+    "@types/node": "^26.6.5",
+    "typescript": "^7.0.2"
+  },
+  "devDependencies": {
+    "typescript": "^5",
+    "@types/node": "^24"
+  },
+  "scripts": {
+    "typecheck": "tsc -p ."
   }
 }
