@@ -10,13 +10,16 @@ import { z } from 'zod';
 const VERDICTS = ['allow', 'block'] as const satisfies readonly string[];
 const SEVERITIES = ['unknown', 'low', 'medium', 'high'] as const satisfies readonly string[];
 
+const LOG_SOURCES = ['judge', 'cache', 'error', 'no-api-key'] as const satisfies readonly string[];
+
 type Verdict = (typeof VERDICTS)[number];
 type Severity = (typeof SEVERITIES)[number];
+type LogSource = (typeof LOG_SOURCES)[number];
 
 interface LogEntry {
 	at: string;
 	durationMs: number;
-	source: 'judge' | 'cache' | 'error' | 'no-api-key';
+	source: LogSource;
 	task: string;
 	command: string;
 	verdict: Verdict;
