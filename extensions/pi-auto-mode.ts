@@ -7,8 +7,11 @@ import type {
 } from '@earendil-works/pi-coding-agent';
 import { z } from 'zod';
 
-type Verdict = 'allow' | 'block';
-type Severity = 'unknown' | 'low' | 'medium' | 'high';
+const VERDICTS = ['allow', 'block'] as const satisfies readonly string[];
+const SEVERITIES = ['unknown', 'low', 'medium', 'high'] as const satisfies readonly string[];
+
+type Verdict = (typeof VERDICTS)[number];
+type Severity = (typeof SEVERITIES)[number];
 
 interface LogEntry {
 	at: string;
@@ -62,10 +65,8 @@ const JUDGE_PROMPT_SCHEMA = z.object({
 	content: z.string(),
 });
 
-const SEVERITIES = ['unknown', 'low', 'medium', 'high'] as const satisfies readonly Severity[];
-
 const VERDICT_SCHEMA = z.object({
-	verdict: z.union([z.literal('allow'), z.literal('block')]),
+	verdict: z.enum(VERDICTS),
 	reason: z.string(),
 	categories: z.array(z.string()).min(1),
 	severity: z.enum(SEVERITIES),
