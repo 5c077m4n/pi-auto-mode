@@ -10,6 +10,7 @@ type Verdict = 'allow' | 'block';
 interface JudgeResult {
 	verdict: Verdict;
 	reason: string;
+	categories: readonly string[];
 }
 
 interface OpenRouterRequestBody {
@@ -47,6 +48,7 @@ const JUDGE_PROMPT_SCHEMA = z.object({
 const VERDICT_SCHEMA = z.object({
 	verdict: z.union([z.literal('allow'), z.literal('block')]),
 	reason: z.string(),
+	categories: z.array(z.string()).min(1),
 });
 
 const OPENROUTER_RESPONSE_SCHEMA = z.object({
@@ -61,12 +63,17 @@ const SYSTEM_PROMPT_LINES = [
 	'ALLOW if the command is safe (no destructive, irreversible, credential-exposing, or data-exfiltrating effect) and is required or a reasonable step for the task.',
 	'BLOCK if the command is dangerous (rm -rf, sudo, git push --force, accessing keys/secrets, sending code or data over the network, mutating the system outside the workspace) or is unrelated to the task (curiosity, wandering exploration).',
 	'Trivially safe read-only or diagnostic commands (echo, ls, cat inside the workspace) that serve the task must be ALLOWED.',
-	'Reply with ONLY minified JSON: {"verdict":"allow"|"block","reason":"<max 20 words>"}',
+	'Classify the command into one or more categories of command types meant to run (e.g. "read-only", "diagnostic", "file-mutation", "package-install", "network", "git").',
+	'Reply with ONLY minified JSON: {"verdict":"allow"|"block","reason":"<max 20 words>","categories":["<category>",...]}',
 ] as const satisfies readonly string[];
 
 const SYSTEM_PROMPT: string = SYSTEM_PROMPT_LINES.join('\n');
 
-const UNPARSABLE_VERDICT: JudgeResult = { verdict: 'block', reason: 'guard: unparsable verdict' };
+const UNPARSABLE_VERDICT: JudgeResult = {
+	verdict: 'block',
+	reason: 'guard: unparsable verdict',
+	categories: [],
+};
 
 const verdictFrom = (text: string): JudgeResult => {
 	const match = text.match(/\{[\s\S]*\}/);
@@ -118,12 +125,16 @@ const cache = new Map<string, JudgeResult>();
 const judgeSafely = async (task: string, command: string): Promise<JudgeResult> => {
 	const apiKey = process.env.OPENROUTER_API_KEY;
 	if (!apiKey) {
-		return { verdict: 'block', reason: 'pi-auto-mode: OPENROUTER_API_KEY not set' };
+		return { verdict: 'block', reason: 'pi-auto-mode: OPENROUTER_API_KEY not set', categories: [] };
 	}
 	try {
 		return await judge(apiKey, task, command);
 	} catch (error) {
-		return { verdict: 'block', reason: `pi-auto-mode: check failed (${String(error)})` };
+		return {
+			verdict: 'block',
+			reason: `pi-auto-mode: check failed (${String(error)})`,
+			categories: [],
+		};
 	}
 };
 
