@@ -5,15 +5,17 @@ import type {
 	ToolCallEvent,
 	ToolCallEventResult,
 } from '@earendil-works/pi-coding-agent';
-import { z } from 'zod';
-
-const VERDICTS = ['allow', 'block'] as const satisfies readonly string[];
-const SEVERITIES = ['unknown', 'low', 'medium', 'high'] as const satisfies readonly string[];
+import {
+	BASH_INPUT_SCHEMA,
+	type JudgePromptMessage,
+	OPENROUTER_RESPONSE_SCHEMA,
+	type Severity,
+	VERDICT_SCHEMA,
+	type Verdict,
+} from './schemas.js';
 
 const LOG_SOURCES = ['judge', 'cache', 'error', 'no-api-key'] as const satisfies readonly string[];
 
-type Verdict = (typeof VERDICTS)[number];
-type Severity = (typeof SEVERITIES)[number];
 type LogSource = (typeof LOG_SOURCES)[number];
 
 interface LogEntry {
@@ -38,7 +40,7 @@ interface JudgeResult {
 
 interface OpenRouterRequestBody {
 	model: string;
-	messages: readonly z.infer<typeof JUDGE_PROMPT_SCHEMA>[];
+	messages: readonly JudgePromptMessage[];
 	max_tokens: number;
 	temperature: number;
 }
@@ -63,24 +65,6 @@ const REQUEST_HEADERS = {
 	'Content-Type': 'application/json',
 } as const satisfies Record<string, string>;
 
-const JUDGE_PROMPT_SCHEMA = z.object({
-	role: z.union([z.literal('system'), z.literal('user')]),
-	content: z.string(),
-});
-
-const VERDICT_SCHEMA = z.object({
-	verdict: z.enum(VERDICTS),
-	reason: z.string(),
-	categories: z.array(z.string()).min(1),
-	severity: z.enum(SEVERITIES),
-});
-
-const OPENROUTER_RESPONSE_SCHEMA = z.object({
-	choices: z.array(z.object({ message: z.object({ content: z.string() }) })),
-});
-
-const BASH_INPUT_SCHEMA = z.object({ command: z.string() });
-
 const SYSTEM_PROMPT_LINES = [
 	'You are a shell-command safety gate for an autonomous coding agent.',
 	"You receive the agent's current task and one proposed bash command, and decide whether running the command is SAFE and REQUIRED for that task.",
@@ -101,7 +85,7 @@ const UNPARSABLE_VERDICT: JudgeResult = {
 	severity: 'unknown',
 };
 
-const verdictFrom = (text: string): JudgeResult => {
+function verdictFrom(text: string): JudgeResult {
 	const match = text.match(/\{[\s\S]*\}/);
 	if (!match) {
 		return UNPARSABLE_VERDICT;
@@ -112,19 +96,21 @@ const verdictFrom = (text: string): JudgeResult => {
 		return UNPARSABLE_VERDICT;
 	}
 	return result.data;
-};
+}
 
-const requestBody = (task: string, command: string): OpenRouterRequestBody => ({
-	model: DEFAULTS.model,
-	messages: [
-		{ role: 'system', content: SYSTEM_PROMPT },
-		{ role: 'user', content: `Task: ${task}\nCommand: ${command}` },
-	],
-	max_tokens: DEFAULTS.maxTokens,
-	temperature: DEFAULTS.temperature,
-});
+function requestBody(task: string, command: string): OpenRouterRequestBody {
+	return {
+		model: DEFAULTS.model,
+		messages: [
+			{ role: 'system', content: SYSTEM_PROMPT },
+			{ role: 'user', content: `Task: ${task}\nCommand: ${command}` },
+		],
+		max_tokens: DEFAULTS.maxTokens,
+		temperature: DEFAULTS.temperature,
+	};
+}
 
-const judge = async (apiKey: string, task: string, command: string): Promise<JudgeResult> => {
+async function judge(apiKey: string, task: string, command: string): Promise<JudgeResult> {
 	const response = await fetch(DEFAULTS.endpoint, {
 		method: 'POST',
 		headers: { ...REQUEST_HEADERS, Authorization: `Bearer ${apiKey}` },
@@ -144,23 +130,23 @@ const judge = async (apiKey: string, task: string, command: string): Promise<Jud
 		throw new Error('openrouter: empty choices');
 	}
 	return verdictFrom(choice.message.content);
-};
+}
 
 const cache = new Map<string, JudgeResult>();
 
 const LOG_PATH = process.env.PIAUTOMODE_LOG_PATH ?? `${tmpdir()}/pi-auto-mode.log`;
 
-const logEntry = (entry: LogEntry): void => {
+function logEntry(entry: LogEntry): void {
 	try {
 		appendFileSync(LOG_PATH, `${JSON.stringify(entry)}\n`);
 	} catch {}
-};
+}
 
-const logged = (entry: Omit<LogEntry, 'at' | 'durationMs'>, startedAt: number): void => {
+function logged(entry: Omit<LogEntry, 'at' | 'durationMs'>, startedAt: number): void {
 	logEntry({ ...entry, at: new Date().toISOString(), durationMs: Date.now() - startedAt });
-};
+}
 
-const judgeSafely = async (task: string, command: string): Promise<JudgeResult> => {
+async function judgeSafely(task: string, command: string): Promise<JudgeResult> {
 	const startedAt = Date.now();
 	const apiKey = process.env.OPENROUTER_API_KEY;
 	if (!apiKey) {
@@ -187,7 +173,7 @@ const judgeSafely = async (task: string, command: string): Promise<JudgeResult> 
 		logged({ source: 'error', error: String(error), task, command, ...result }, startedAt);
 		return result;
 	}
-};
+}
 
 export default function piAutoMode(pi: ExtensionAPI): void {
 	let currentTask = 'unknown';

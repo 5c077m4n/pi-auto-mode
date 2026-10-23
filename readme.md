@@ -26,7 +26,8 @@ Verdicts are cached per task+command pair.
 pi install git:github.com/5c077m4n/pi-auto-mode
 ```
 
-Requires `OPENROUTER_API_KEY` in Pi's environment.
+> [!IMPORTANT]
+> Requires `OPENROUTER_API_KEY` in Pi's environment.
 
 ## Configuration
 
