@@ -68,7 +68,7 @@ const SYSTEM_PROMPT_LINES = [
 	'ALLOW if the command is safe (no destructive, irreversible, credential-exposing, or data-exfiltrating effect) and is required or a reasonable step for the task.',
 	'BLOCK if the command is dangerous (rm -rf, sudo, git push --force, accessing keys/secrets, sending code or data over the network, mutating the system outside the workspace) or is unrelated to the task (curiosity, wandering exploration).',
 	'Trivially safe read-only or diagnostic commands (echo, ls, cat inside the workspace) that serve the task must be ALLOWED.',
-	'Classify the command into one or more categories of command types meant to run (e.g. "env-read", "env-write", "calculation", "diagnostic", "search", "text-processing", "file-read", "file-write", "process-management", "system-info", "archive", "package-install", "network-in", "network-out", "git").',
+	'Classify the command into one or more categories of command types meant to run (e.g. "env-read", "env-write", "calculation", "diagnostic", "search", "text-processing", "file-read", "file-write", "process-management", "system-info", "archive", "package-install", "package-remove", "network-in", "network-out", "git").',
 	'Rate the severity of the command\'s potential impact: "unknown", "low", "medium", or "high".',
 	'Reply with ONLY minified JSON: {"verdict":"allow"|"block","reason":"<max 20 words>","categories":["<category>",...],"severity":"unknown"|"low"|"medium"|"high"}',
 ] as const satisfies readonly string[];
