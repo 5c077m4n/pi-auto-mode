@@ -21,7 +21,7 @@
 		"typecheck": "tsc -p .",
 		"check": "biome check .",
 		"format": "biome format --write .",
-		"prepare": "husky"
+		"prepare": "husky || true"
 	},
 	"dependencies": {
 		"zod": "4.6.7"
