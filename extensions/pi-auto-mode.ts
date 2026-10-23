@@ -1,3 +1,5 @@
+import { appendFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import type {
 	ExtensionAPI,
 	ToolCallEvent,
@@ -7,6 +9,19 @@ import { z } from 'zod';
 
 type Verdict = 'allow' | 'block';
 type Severity = 'unknown' | 'low' | 'medium' | 'high';
+
+interface LogEntry {
+	at: string;
+	durationMs: number;
+	source: 'judge' | 'cache' | 'error' | 'no-api-key';
+	task: string;
+	command: string;
+	verdict: Verdict;
+	reason: string;
+	categories?: readonly string[];
+	severity?: Severity;
+	error?: string;
+}
 
 interface JudgeResult {
 	verdict: Verdict;
@@ -129,25 +144,44 @@ const judge = async (apiKey: string, task: string, command: string): Promise<Jud
 
 const cache = new Map<string, JudgeResult>();
 
+const LOG_PATH = process.env.PIAUTOMODE_LOG_PATH ?? `${tmpdir()}/pi-auto-mode.log`;
+
+const logEntry = (entry: LogEntry): void => {
+	try {
+		appendFileSync(LOG_PATH, `${JSON.stringify(entry)}\n`);
+	} catch {}
+};
+
+const logged = (entry: Omit<LogEntry, 'at' | 'durationMs'>, startedAt: number): void => {
+	logEntry({ ...entry, at: new Date().toISOString(), durationMs: Date.now() - startedAt });
+};
+
 const judgeSafely = async (task: string, command: string): Promise<JudgeResult> => {
+	const startedAt = Date.now();
 	const apiKey = process.env.OPENROUTER_API_KEY;
 	if (!apiKey) {
-		return {
+		const result: JudgeResult = {
 			verdict: 'block',
 			reason: 'pi-auto-mode: OPENROUTER_API_KEY not set',
 			categories: [],
 			severity: 'unknown',
 		};
+		logged({ source: 'no-api-key', task, command, ...result }, startedAt);
+		return result;
 	}
 	try {
-		return await judge(apiKey, task, command);
+		const result = await judge(apiKey, task, command);
+		logged({ source: 'judge', task, command, ...result }, startedAt);
+		return result;
 	} catch (error) {
-		return {
+		const result: JudgeResult = {
 			verdict: 'block',
 			reason: `pi-auto-mode: check failed (${String(error)})`,
 			categories: [],
 			severity: 'unknown',
 		};
+		logged({ source: 'error', error: String(error), task, command, ...result }, startedAt);
+		return result;
 	}
 };
 
@@ -169,6 +203,9 @@ export default function piAutoMode(pi: ExtensionAPI): void {
 		const command: string = commandResult.data.command;
 		const cacheKey = `${currentTask}\n${command}`;
 		const cached: JudgeResult | undefined = cache.get(cacheKey);
+		if (cached) {
+			logged({ source: 'cache', task: currentTask, command, ...cached }, Date.now());
+		}
 		const verdict: JudgeResult = cached ?? (await judgeSafely(currentTask, command));
 		cache.set(cacheKey, verdict);
 		if (verdict.verdict === 'block') {

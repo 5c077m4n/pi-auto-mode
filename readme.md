@@ -30,10 +30,11 @@ Requires `OPENROUTER_API_KEY` in Pi's environment.
 
 ## Configuration
 
-| Env var                 | Default               | Meaning                            |
-| ----------------------- | --------------------- | ---------------------------------- |
-| `PIAUTOMODE_MODEL`      | `typesafe/jev-router` | OpenRouter model used as the judge |
-| `PIAUTOMODE_TIMEOUT_MS` | `30000`               | Judge request timeout              |
+| Env var                 | Default                    | Meaning                                           |
+| ----------------------- | -------------------------- | ------------------------------------------------- |
+| `PIAUTOMODE_MODEL`      | `typesafe/jev-router`      | OpenRouter model used as the judge                |
+| `PIAUTOMODE_TIMEOUT_MS` | `30000`                    | Judge request timeout                             |
+| `PIAUTOMODE_LOG_PATH`   | `$TMPDIR/pi-auto-mode.log` | JSONL log of every request, response and duration |
 
 ## Try it for one invocation
 
