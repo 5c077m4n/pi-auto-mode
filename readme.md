@@ -7,11 +7,11 @@ A [Pi](https://github.com/mariozechner/pi) extension that gates every bash comma
 The extension hooks Pi's `tool_call` event. For each proposed bash command it sends the current task plus the command to an OpenRouter model with a strict judge prompt. The judge replies with minified JSON:
 
 ```json
-{ "verdict": "allow", "reason": "...", "categories": ["read-only"], "severity": "none" }
+{ "verdict": "allow", "reason": "...", "categories": ["read-only"], "severity": "unknown" }
 ```
 
 - `categories` — one or more command-type labels for the command
-- `severity` — `none` | `low` | `medium` | `high`, the command's potential impact
+- `severity` — `unknown` | `low` | `medium` | `high`, the command's potential impact
 
 - `allow` — the command runs
 - `block` — Pi receives the block with the judge's reason

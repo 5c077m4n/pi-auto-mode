@@ -6,7 +6,7 @@ import type {
 import { z } from 'zod';
 
 type Verdict = 'allow' | 'block';
-type Severity = 'none' | 'low' | 'medium' | 'high';
+type Severity = 'unknown' | 'low' | 'medium' | 'high';
 
 interface JudgeResult {
 	verdict: Verdict;
@@ -47,7 +47,7 @@ const JUDGE_PROMPT_SCHEMA = z.object({
 	content: z.string(),
 });
 
-const SEVERITIES = ['none', 'low', 'medium', 'high'] as const satisfies readonly Severity[];
+const SEVERITIES = ['unknown', 'low', 'medium', 'high'] as const satisfies readonly Severity[];
 
 const VERDICT_SCHEMA = z.object({
 	verdict: z.union([z.literal('allow'), z.literal('block')]),
@@ -69,8 +69,8 @@ const SYSTEM_PROMPT_LINES = [
 	'BLOCK if the command is dangerous (rm -rf, sudo, git push --force, accessing keys/secrets, sending code or data over the network, mutating the system outside the workspace) or is unrelated to the task (curiosity, wandering exploration).',
 	'Trivially safe read-only or diagnostic commands (echo, ls, cat inside the workspace) that serve the task must be ALLOWED.',
 	'Classify the command into one or more categories of command types meant to run (e.g. "read-only", "diagnostic", "file-mutation", "package-install", "network", "git").',
-	'Rate the severity of the command\'s potential impact: "none", "low", "medium", or "high".',
-	'Reply with ONLY minified JSON: {"verdict":"allow"|"block","reason":"<max 20 words>","categories":["<category>",...],"severity":"none"|"low"|"medium"|"high"}',
+	'Rate the severity of the command\'s potential impact: "unknown", "low", "medium", or "high".',
+	'Reply with ONLY minified JSON: {"verdict":"allow"|"block","reason":"<max 20 words>","categories":["<category>",...],"severity":"unknown"|"low"|"medium"|"high"}',
 ] as const satisfies readonly string[];
 
 const SYSTEM_PROMPT: string = SYSTEM_PROMPT_LINES.join('\n');
@@ -79,7 +79,7 @@ const UNPARSABLE_VERDICT: JudgeResult = {
 	verdict: 'block',
 	reason: 'guard: unparsable verdict',
 	categories: [],
-	severity: 'none',
+	severity: 'unknown',
 };
 
 const verdictFrom = (text: string): JudgeResult => {
@@ -136,7 +136,7 @@ const judgeSafely = async (task: string, command: string): Promise<JudgeResult> 
 			verdict: 'block',
 			reason: 'pi-auto-mode: OPENROUTER_API_KEY not set',
 			categories: [],
-			severity: 'none',
+			severity: 'unknown',
 		};
 	}
 	try {
@@ -146,7 +146,7 @@ const judgeSafely = async (task: string, command: string): Promise<JudgeResult> 
 			verdict: 'block',
 			reason: `pi-auto-mode: check failed (${String(error)})`,
 			categories: [],
-			severity: 'none',
+			severity: 'unknown',
 		};
 	}
 };
